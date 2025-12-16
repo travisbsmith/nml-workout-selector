@@ -15,7 +15,7 @@ export async function GET(request: Request) {
     const videos = await fetchChannelVideos(NML_CHANNEL_ID, 50);
     const filtered = filterByDuration(videos);
 
-    const supabase = createClient();
+    const supabase = await createClient();
 
     let count = 0;
     // Insert new videos (ignore duplicates)
@@ -47,4 +47,3 @@ export async function GET(request: Request) {
     );
   }
 }
-

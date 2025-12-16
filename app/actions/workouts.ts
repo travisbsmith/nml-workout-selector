@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
 export async function getWorkoutSuggestions() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Get muscle group status
   const { data: statusData, error: statusError } = await supabase.rpc(
@@ -70,7 +70,7 @@ export async function getWorkoutSuggestions() {
 }
 
 async function getWorkoutSuggestions_relaxed() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Relax to 2 days rest
   const { data: statusData } = await supabase.rpc("get_muscle_group_status");
@@ -116,7 +116,7 @@ async function getWorkoutSuggestions_relaxed() {
 }
 
 export async function completeWorkout(videoId: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Get video details
   const { data: video, error: videoError } = await supabase
@@ -149,7 +149,7 @@ export async function completeWorkout(videoId: string) {
 }
 
 export async function getWorkoutHistory(limit: number = 10) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data, error } = await supabase
     .from("workout_log")
@@ -173,4 +173,3 @@ export async function getWorkoutHistory(limit: number = 10) {
 
   return data;
 }
-
