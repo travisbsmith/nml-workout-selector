@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { fetchChannelVideos, filterByDuration, parseDuration } from "@/lib/youtube";
 import { createClient } from "@/lib/supabase/server";
 
-const NML_CHANNEL_ID = "UC-MK8kLOUmUZGjKGzVlBaOg";
+const NML_CHANNEL_ID = "UCIiI9tAbgvSPPL_50gefFtw";
 
 export async function GET(request: Request) {
   // In production, add authentication here
