@@ -7,7 +7,8 @@ interface YouTubeVideo {
 }
 
 /**
- * Fetch ALL videos from a channel using pagination
+ * Fetch ALL videos from a channel using the uploads playlist
+ * This is more reliable than the search API for getting all videos
  */
 export async function fetchAllChannelVideos(
   channelId: string
@@ -18,35 +19,56 @@ export async function fetchAllChannelVideos(
     throw new Error("YOUTUBE_API_KEY is not set");
   }
 
+  // Step 1: Get the uploads playlist ID for this channel
+  const channelUrl = new URL("https://www.googleapis.com/youtube/v3/channels");
+  channelUrl.searchParams.set("part", "contentDetails");
+  channelUrl.searchParams.set("id", channelId);
+  channelUrl.searchParams.set("key", apiKey);
+
+  const channelRes = await fetch(channelUrl);
+  if (!channelRes.ok) {
+    const error = await channelRes.json();
+    throw new Error(`YouTube channel fetch failed: ${JSON.stringify(error)}`);
+  }
+
+  const channelData = await channelRes.json();
+  if (!channelData.items || channelData.items.length === 0) {
+    throw new Error("Channel not found");
+  }
+
+  const uploadsPlaylistId =
+    channelData.items[0].contentDetails.relatedPlaylists.uploads;
+  console.log(`Uploads playlist ID: ${uploadsPlaylistId}`);
+
+  // Step 2: Paginate through all playlist items to get video IDs
   const allVideoIds: string[] = [];
   let nextPageToken: string | undefined = undefined;
 
-  // Step 1: Paginate through all search results to get video IDs
   do {
-    const searchUrl = new URL("https://www.googleapis.com/youtube/v3/search");
-    searchUrl.searchParams.set("part", "id");
-    searchUrl.searchParams.set("channelId", channelId);
-    searchUrl.searchParams.set("type", "video");
-    searchUrl.searchParams.set("order", "date");
-    searchUrl.searchParams.set("maxResults", "50");
-    searchUrl.searchParams.set("key", apiKey);
+    const playlistUrl = new URL(
+      "https://www.googleapis.com/youtube/v3/playlistItems"
+    );
+    playlistUrl.searchParams.set("part", "contentDetails");
+    playlistUrl.searchParams.set("playlistId", uploadsPlaylistId);
+    playlistUrl.searchParams.set("maxResults", "50");
+    playlistUrl.searchParams.set("key", apiKey);
     if (nextPageToken) {
-      searchUrl.searchParams.set("pageToken", nextPageToken);
+      playlistUrl.searchParams.set("pageToken", nextPageToken);
     }
 
-    const searchRes = await fetch(searchUrl);
-    if (!searchRes.ok) {
-      const error = await searchRes.json();
-      throw new Error(`YouTube search failed: ${JSON.stringify(error)}`);
+    const playlistRes = await fetch(playlistUrl);
+    if (!playlistRes.ok) {
+      const error = await playlistRes.json();
+      throw new Error(`YouTube playlist fetch failed: ${JSON.stringify(error)}`);
     }
 
-    const searchData = await searchRes.json();
-    const videoIds = searchData.items
-      .filter((item: any) => item.id?.videoId)
-      .map((item: any) => item.id.videoId);
+    const playlistData = await playlistRes.json();
+    const videoIds = playlistData.items.map(
+      (item: any) => item.contentDetails.videoId
+    );
 
     allVideoIds.push(...videoIds);
-    nextPageToken = searchData.nextPageToken;
+    nextPageToken = playlistData.nextPageToken;
 
     console.log(`Fetched ${allVideoIds.length} video IDs so far...`);
   } while (nextPageToken);
@@ -57,7 +79,7 @@ export async function fetchAllChannelVideos(
     return [];
   }
 
-  // Step 2: Get video details in batches of 50 (API limit)
+  // Step 3: Get video details in batches of 50 (API limit)
   const allVideos: YouTubeVideo[] = [];
   const batchSize = 50;
 
