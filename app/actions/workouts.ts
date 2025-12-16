@@ -16,18 +16,13 @@ export async function getWorkoutSuggestions() {
     throw statusError;
   }
 
-  // Get eligible workout types
+  // Get eligible workout types (3+ days rest)
   const eligibleTypes =
     statusData
       ?.filter((s: any) => s.ready)
       .map((s: any) => s.workout_type) || [];
 
-  if (eligibleTypes.length === 0) {
-    // Fallback: relax to 2 days
-    return getWorkoutSuggestions_relaxed();
-  }
-
-  // Get recent video IDs
+  // Get recent video IDs (to avoid repeats within 42 days)
   const { data: recentIds, error: recentError } = await supabase.rpc(
     "get_recent_video_ids",
     { days: 42 }
@@ -39,73 +34,63 @@ export async function getWorkoutSuggestions() {
 
   const recentVideoIds = recentIds?.map((r: any) => r.video_id) || [];
 
-  // Get eligible videos
-  let query = supabase
+  // Try to find videos matching eligible types
+  if (eligibleTypes.length > 0) {
+    let query = supabase
+      .from("videos")
+      .select("*")
+      .in("workout_type", eligibleTypes)
+      .order("channel_published_at", { ascending: false })
+      .limit(20);
+
+    if (recentVideoIds.length > 0) {
+      query = query.not("id", "in", `(${recentVideoIds.join(",")})`);
+    }
+
+    const { data: videos, error } = await query;
+
+    if (!error && videos && videos.length > 0) {
+      const shuffled = videos.sort(() => Math.random() - 0.5);
+      const selected = shuffled.slice(0, Math.min(3, shuffled.length));
+
+      return {
+        workouts: selected,
+        muscleStatus: statusData,
+        relaxed: false,
+      };
+    }
+  }
+
+  // Fallback: Get ANY videos (ignore rest period, but still avoid recent repeats)
+  // This handles the case where all videos are tagged with one type
+  let fallbackQuery = supabase
     .from("videos")
     .select("*")
-    .in("workout_type", eligibleTypes)
     .order("channel_published_at", { ascending: false })
     .limit(20);
 
   if (recentVideoIds.length > 0) {
-    query = query.not("id", "in", `(${recentVideoIds.join(",")})`);
+    fallbackQuery = fallbackQuery.not("id", "in", `(${recentVideoIds.join(",")})`);
   }
 
-  const { data: videos, error } = await query;
+  const { data: fallbackVideos, error: fallbackError } = await fallbackQuery;
 
-  if (error) throw error;
-  if (!videos || videos.length === 0) {
-    return getWorkoutSuggestions_relaxed();
+  if (fallbackError) throw fallbackError;
+
+  // If still no videos (all were recently watched), get any videos
+  let finalVideos = fallbackVideos;
+  if (!finalVideos || finalVideos.length === 0) {
+    const { data: anyVideos, error: anyError } = await supabase
+      .from("videos")
+      .select("*")
+      .order("channel_published_at", { ascending: false })
+      .limit(20);
+
+    if (anyError) throw anyError;
+    finalVideos = anyVideos;
   }
 
-  // Randomly select 3
-  const shuffled = videos.sort(() => Math.random() - 0.5);
-  const selected = shuffled.slice(0, Math.min(3, shuffled.length));
-
-  return {
-    workouts: selected,
-    muscleStatus: statusData,
-    relaxed: false,
-  };
-}
-
-async function getWorkoutSuggestions_relaxed() {
-  const supabase = await createClient();
-
-  // Relax to 2 days rest
-  const { data: statusData } = await supabase.rpc("get_muscle_group_status");
-
-  const eligibleTypes =
-    statusData
-      ?.filter((s: any) => s.days_ago >= 2)
-      .map((s: any) => s.workout_type) || [];
-
-  if (eligibleTypes.length === 0) {
-    // Last resort: show all types
-    eligibleTypes.push("lower_body", "full_body", "hiit", "strength");
-  }
-
-  const { data: recentIds } = await supabase.rpc("get_recent_video_ids", {
-    days: 42,
-  });
-  const recentVideoIds = recentIds?.map((r: any) => r.video_id) || [];
-
-  let query = supabase
-    .from("videos")
-    .select("*")
-    .in("workout_type", eligibleTypes)
-    .order("channel_published_at", { ascending: false })
-    .limit(20);
-
-  if (recentVideoIds.length > 0) {
-    query = query.not("id", "in", `(${recentVideoIds.join(",")})`);
-  }
-
-  const { data: videos, error } = await query;
-
-  if (error) throw error;
-
-  const shuffled = (videos || []).sort(() => Math.random() - 0.5);
+  const shuffled = (finalVideos || []).sort(() => Math.random() - 0.5);
   const selected = shuffled.slice(0, Math.min(3, shuffled.length));
 
   return {
