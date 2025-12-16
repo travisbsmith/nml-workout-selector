@@ -76,17 +76,18 @@ A mobile-first web app that intelligently selects 30-35 minute workout videos fr
 
 ## Deployment
 
-### Deploy to Vercel
+### Step 1: Push to GitHub
 
-1. **Push to GitHub**:
-   ```bash
-   git add .
-   git commit -m "Initial commit"
-   git remote add origin https://github.com/yourusername/nml-workout-selector.git
-   git push -u origin main
-   ```
+See `GITHUB_SETUP.md` for detailed instructions, or:
 
-2. **Connect to Vercel**:
+```bash
+# Create repo on GitHub first, then:
+git remote add origin https://github.com/yourusername/nml-workout-selector.git
+git branch -M main
+git push -u origin main
+```
+
+### Step 2: Deploy to Vercel
    - Go to [vercel.com](https://vercel.com)
    - Click "New Project"
    - Import your GitHub repository
