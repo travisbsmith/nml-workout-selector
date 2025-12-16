@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+:root {
+  --background: #F7F7F7;
+  --foreground: #1e293b;
+  --primary: #FF6B6B;
+  --secondary: #4ECDC4;
+  --success: #95E1D3;
+  --warning: #FFE66D;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
