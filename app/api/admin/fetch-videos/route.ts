@@ -1,23 +1,32 @@
 import { NextResponse } from "next/server";
-import { fetchChannelVideos, filterByDuration, parseDuration } from "@/lib/youtube";
+import {
+  fetchAllChannelVideos,
+  filterByDuration,
+  parseDuration,
+} from "@/lib/youtube";
 import { createClient } from "@/lib/supabase/server";
 
 const NML_CHANNEL_ID = "UCIiI9tAbgvSPPL_50gefFtw";
 
-export async function GET(request: Request) {
-  // In production, add authentication here
-  // const authHeader = request.headers.get("authorization");
-  // if (authHeader !== `Bearer ${process.env.ADMIN_PASSWORD}`) {
-  //   return new Response("Unauthorized", { status: 401 });
-  // }
+export const maxDuration = 60; // Allow up to 60 seconds for this route
 
+export async function GET(request: Request) {
   try {
-    const videos = await fetchChannelVideos(NML_CHANNEL_ID, 50);
-    const filtered = filterByDuration(videos);
+    console.log("Starting to fetch ALL videos from channel...");
+
+    // Fetch ALL videos from the channel
+    const allVideos = await fetchAllChannelVideos(NML_CHANNEL_ID);
+    console.log(`Total videos on channel: ${allVideos.length}`);
+
+    // Filter for 30-35 minute workouts
+    const filtered = filterByDuration(allVideos);
+    console.log(`Videos in 30-35 min range: ${filtered.length}`);
 
     const supabase = await createClient();
 
-    let count = 0;
+    let insertedCount = 0;
+    let skippedCount = 0;
+
     // Insert new videos (ignore duplicates)
     for (const video of filtered) {
       const { error } = await supabase.from("videos").upsert(
@@ -30,17 +39,25 @@ export async function GET(request: Request) {
           workout_type: "full_body", // Default - needs manual tagging
           muscle_groups: ["cardio"], // Default - needs manual tagging
         },
-        { onConflict: "youtube_id" }
+        { onConflict: "youtube_id", ignoreDuplicates: true }
       );
 
       if (!error) {
-        count++;
+        insertedCount++;
+      } else {
+        skippedCount++;
       }
     }
 
-    return NextResponse.json({ success: true, count });
+    return NextResponse.json({
+      success: true,
+      totalOnChannel: allVideos.length,
+      matching30to35min: filtered.length,
+      inserted: insertedCount,
+      skipped: skippedCount,
+    });
   } catch (error: any) {
-    console.error("Cron error:", error);
+    console.error("Fetch error:", error);
     return NextResponse.json(
       { error: error.message || "Failed to fetch videos" },
       { status: 500 }

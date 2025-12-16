@@ -1,22 +1,32 @@
 "use client";
 
 import { useState } from "react";
-import { fetchChannelVideos, filterByDuration, parseDuration } from "@/lib/youtube";
 
 export default function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [stats, setStats] = useState<{
+    totalOnChannel?: number;
+    matching30to35min?: number;
+    inserted?: number;
+  } | null>(null);
 
   const fetchVideos = async () => {
     setLoading(true);
-    setMessage("");
+    setMessage("Fetching ALL videos from the channel... This may take a minute.");
+    setStats(null);
     try {
       const res = await fetch("/api/admin/fetch-videos");
       const data = await res.json();
       if (data.error) {
         setMessage(`Error: ${data.error}`);
       } else {
-        setMessage(`Fetched ${data.count} videos. Please tag them in Supabase.`);
+        setMessage("Successfully fetched and saved videos!");
+        setStats({
+          totalOnChannel: data.totalOnChannel,
+          matching30to35min: data.matching30to35min,
+          inserted: data.inserted,
+        });
       }
     } catch (error) {
       setMessage(`Error: ${error}`);
@@ -33,22 +43,55 @@ export default function AdminPage() {
           <button
             onClick={fetchVideos}
             disabled={loading}
-            className="bg-blue-500 text-white px-6 py-3 rounded-xl hover:bg-blue-600 disabled:opacity-50 min-h-[44px]"
+            className="bg-blue-500 text-white px-6 py-3 rounded-xl hover:bg-blue-600 disabled:opacity-50 min-h-[44px] w-full"
           >
-            {loading ? "Fetching..." : "Fetch New Videos from YouTube"}
+            {loading ? "Fetching all videos... (this takes ~1 min)" : "Fetch ALL Videos from YouTube Channel"}
           </button>
+
           {message && (
-            <p className={`p-4 rounded ${message.includes("Error") ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"}`}>
+            <p
+              className={`p-4 rounded ${
+                message.includes("Error")
+                  ? "bg-red-100 text-red-800"
+                  : message.includes("Successfully")
+                  ? "bg-green-100 text-green-800"
+                  : "bg-blue-100 text-blue-800"
+              }`}
+            >
               {message}
             </p>
           )}
+
+          {stats && (
+            <div className="grid grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-gray-800">
+                  {stats.totalOnChannel}
+                </div>
+                <div className="text-sm text-gray-500">Total on Channel</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-blue-600">
+                  {stats.matching30to35min}
+                </div>
+                <div className="text-sm text-gray-500">30-35 min Videos</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-green-600">
+                  {stats.inserted}
+                </div>
+                <div className="text-sm text-gray-500">Saved to DB</div>
+              </div>
+            </div>
+          )}
+
           <div className="mt-6 p-4 bg-gray-100 rounded-lg">
             <h2 className="font-semibold mb-2">Instructions:</h2>
             <ol className="list-decimal list-inside space-y-2 text-sm">
-              <li>Click "Fetch New Videos" to get videos from NML channel</li>
-              <li>Go to Supabase dashboard → videos table</li>
-              <li>Tag each video with workout_type and muscle_groups</li>
-              <li>Only videos with 30-35 minute duration are fetched</li>
+              <li>Click the button above to fetch ALL videos from the NML channel</li>
+              <li>Only videos with 30-35 minute duration are saved</li>
+              <li>Go to <a href="https://supabase.com/dashboard/project/kltqxqxbfzczlupxstsx/editor" target="_blank" className="text-blue-600 underline">Supabase Table Editor</a></li>
+              <li>Tag each video with the correct workout_type and muscle_groups</li>
             </ol>
           </div>
         </div>
@@ -56,4 +99,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
