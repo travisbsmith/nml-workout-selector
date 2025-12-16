@@ -32,7 +32,9 @@ export async function fetchChannelVideos(
   }
 
   const searchData = await searchRes.json();
-  const videoIds = searchData.items.map((item: any) => item.id.videoId);
+  const videoIds = searchData.items
+    .filter((item: any) => item.id?.videoId)
+    .map((item: any) => item.id.videoId);
 
   if (videoIds.length === 0) {
     return [];
@@ -52,19 +54,25 @@ export async function fetchChannelVideos(
 
   const videosData = await videosRes.json();
 
-  return videosData.items.map((item: any) => ({
-    id: item.id,
-    title: item.snippet.title,
-    thumbnail:
-      item.snippet.thumbnails.maxresdefault?.url ||
-      item.snippet.thumbnails.high.url,
-    publishedAt: item.snippet.publishedAt,
-    duration: item.contentDetails.duration,
-  }));
+  return videosData.items
+    .filter((item: any) => item.contentDetails?.duration)
+    .map((item: any) => ({
+      id: item.id,
+      title: item.snippet.title,
+      thumbnail:
+        item.snippet.thumbnails?.maxresdefault?.url ||
+        item.snippet.thumbnails?.high?.url ||
+        item.snippet.thumbnails?.medium?.url ||
+        "",
+      publishedAt: item.snippet.publishedAt,
+      duration: item.contentDetails.duration,
+    }));
 }
 
 // Parse ISO 8601 duration to minutes
-export function parseDuration(iso8601: string): number {
+export function parseDuration(iso8601: string | undefined | null): number {
+  if (!iso8601) return 0;
+  
   const match = iso8601.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
   if (!match) return 0;
 
@@ -82,4 +90,3 @@ export function filterByDuration(videos: YouTubeVideo[]) {
     return minutes >= 30 && minutes <= 35;
   });
 }
-
