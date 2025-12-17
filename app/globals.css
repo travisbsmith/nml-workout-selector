@@ -1,21 +1,38 @@
 @import "tailwindcss";
 
 :root {
-  --background: #F7F7F7;
-  --foreground: #1e293b;
-  --primary: #FF6B6B;
-  --secondary: #4ECDC4;
-  --success: #95E1D3;
-  --warning: #FFE66D;
+  /* Pumping Iron Color Palette */
+  --background: #0A0A0A;
+  --background-secondary: #141414;
+  --foreground: #FAFAFA;
+  --foreground-muted: #A3A3A3;
+  
+  /* Fiery Reds - Like the movie poster */
+  --primary: #DC2626;
+  --primary-dark: #991B1B;
+  --primary-glow: #EF4444;
+  
+  /* Championship Gold */
+  --gold: #D4AF37;
+  --gold-dark: #A3872A;
+  --gold-light: #F5D76E;
+  
+  /* Iron/Steel */
+  --steel: #52525B;
+  --steel-light: #71717A;
+  
+  /* Status Colors */
+  --success: #22C55E;
+  --warning: #F59E0B;
+  --locked: #6B7280;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-primary: var(--primary);
-  --color-secondary: var(--secondary);
-  --color-success: var(--success);
-  --color-warning: var(--warning);
+  --color-gold: var(--gold);
+  --color-steel: var(--steel);
 }
 
 html {
@@ -25,6 +42,88 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
+}
+
+/* Pumping Iron styled gradient backgrounds */
+.pumping-gradient {
+  background: linear-gradient(
+    180deg,
+    #0A0A0A 0%,
+    #1A0A0A 50%,
+    #0A0A0A 100%
+  );
+}
+
+.pumping-gradient-radial {
+  background: radial-gradient(
+    ellipse at top,
+    #2A0A0A 0%,
+    #0A0A0A 70%
+  );
+}
+
+/* Gold shimmer effect */
+.gold-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--gold-dark) 0%,
+    var(--gold-light) 50%,
+    var(--gold-dark) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Gritty texture overlay */
+.texture-overlay {
+  position: relative;
+}
+
+.texture-overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23noise)'/%3E%3C/svg%3E");
+  opacity: 0.03;
+  pointer-events: none;
+}
+
+/* Card styling */
+.iron-card {
+  background: linear-gradient(145deg, #1A1A1A 0%, #0F0F0F 100%);
+  border: 1px solid rgba(82, 82, 91, 0.3);
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.5),
+    0 2px 4px -2px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Button press effect */
+.iron-button {
+  background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
+  box-shadow: 
+    0 4px 14px rgba(220, 38, 38, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all 0.15s ease;
+}
+
+.iron-button:hover {
+  background: linear-gradient(180deg, var(--primary-glow) 0%, var(--primary) 100%);
+  box-shadow: 
+    0 6px 20px rgba(220, 38, 38, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.iron-button:active {
+  transform: scale(0.98);
+  box-shadow: 
+    0 2px 8px rgba(220, 38, 38, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .safe-top {

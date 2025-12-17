@@ -1,11 +1,12 @@
 {
-  "name": "NML Workout Picker",
-  "short_name": "NML Workouts",
-  "description": "Find your perfect 30-minute workout",
+  "name": "Pumping Iron - Workout Selector",
+  "short_name": "Pump Iron",
+  "description": "Choose your workout. Pump the iron. Get the gains.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#F7F7F7",
-  "theme_color": "#FF6B6B",
+  "background_color": "#0A0A0A",
+  "theme_color": "#DC2626",
+  "orientation": "portrait",
   "icons": [
     {
       "src": "/icon-192.png",
@@ -19,4 +20,3 @@
     }
   ]
 }
-
